@@ -23,6 +23,7 @@ export default function AdminPage() {
   // Dashboard Tabs
   const [activeTab, setActiveTab] = useState<AdminTab>("products");
   const [statusMsg, setStatusMsg] = useState("");
+  const [dbConnected, setDbConnected] = useState<boolean | null>(null);
 
   // Data States
   const [products, setProducts] = useState<ProductItem[]>(DEFAULT_PRODUCTS);
@@ -81,13 +82,17 @@ export default function AdminPage() {
 
     try {
       const [pRes, oRes, sRes] = await Promise.all([
-        fetch("/api/products?all=1").catch(() => null),
-        fetch("/api/orders").catch(() => null),
-        fetch("/api/settings").catch(() => null),
+        fetch(`/api/products?all=1&t=${Date.now()}`, { cache: "no-store" }).catch(() => null),
+        fetch(`/api/orders?t=${Date.now()}`, { cache: "no-store" }).catch(() => null),
+        fetch(`/api/settings?t=${Date.now()}`, { cache: "no-store" }).catch(() => null),
       ]);
       if (pRes && pRes.ok) {
         const d = await pRes.json();
-        if (Array.isArray(d.products) && d.products.length > 0) setProducts(d.products);
+        setDbConnected(Boolean(d.configured));
+        if (d.configured && Array.isArray(d.products)) {
+          setProducts(d.products);
+          localStorage.setItem("ibro_store_products", JSON.stringify(d.products));
+        }
       }
       if (oRes && oRes.ok) {
         const d = await oRes.json();
@@ -261,13 +266,19 @@ export default function AdminPage() {
     setProducts(updatedList);
     localStorage.setItem("ibro_store_products", JSON.stringify(updatedList));
 
-    await fetch("/api/products", {
+    const res = await fetch("/api/products", {
       method: editingProductId ? "PUT" : "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(productObj),
     }).catch(() => null);
 
-    setStatusMsg(editingProductId ? "✅ প্রোডাক্ট আপডেট করা হয়েছে!" : "✅ নতুন প্রোডাক্ট যোগ করা হয়েছে!");
+    if (res && !res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      setStatusMsg(`⚠️ লোকাল ব্রাউজারে সেভ হয়েছে, কিন্তু ডাটাবেজে সেভ হয়নি: ${errData.error || "Supabase Env চেক করুন"}`);
+    } else {
+      await loadAdminData();
+      setStatusMsg(editingProductId ? "✅ প্রোডাক্ট সব ডিভাইসের জন্য আপডেট করা হয়েছে!" : "✅ নতুন প্রোডাক্ট সব ডিভাইসের জন্য যোগ করা হয়েছে!");
+    }
     resetProductForm();
   };
 
@@ -286,17 +297,23 @@ export default function AdminPage() {
     setStatusMsg(updated.active ? "👁️ প্রোডাক্টটি স্টোরে দৃশ্যমান করা হয়েছে।" : "🙈 প্রোডাক্টটি স্টোর থেকে Hide করা হয়েছে।");
   };
 
-  const handleDeleteProduct = async (id: string) => {
+  const handleDeleteProduct = async (p: ProductItem) => {
     if (!confirm("আপনি কি নিশ্চিতভাবে এই প্রোডাক্টটি ডিলিট করতে চান?")) return;
-    const updatedList = products.filter((item) => item.id !== id);
+    const updatedList = products.filter((item) => item.id !== p.id);
     setProducts(updatedList);
     localStorage.setItem("ibro_store_products", JSON.stringify(updatedList));
 
-    await fetch(`/api/products?id=${encodeURIComponent(id)}`, {
-      method: "DELETE",
-    }).catch(() => null);
+    const res = await fetch(
+      `/api/products?id=${encodeURIComponent(p.id)}&sku=${encodeURIComponent(p.sku)}`,
+      { method: "DELETE" }
+    ).catch(() => null);
 
-    setStatusMsg("🗑️ প্রোডাক্ট ডিলিট করা হয়েছে।");
+    if (res && !res.ok) {
+      setStatusMsg("⚠️ শুধুমাত্র এই ব্রাউজার থেকে ডিলিট হয়েছে। সব ব্রাউজারে সিঙ্ক করতে Vercel-এ Supabase Keys যোগ করুন।");
+    } else {
+      await loadAdminData();
+      setStatusMsg("🗑️ প্রোডাক্টটি ডাটাবেজ থেকে স্থায়ীভাবে ডিলিট করা হয়েছে (সব ডিভাইসে আপডেট হয়েছে)।");
+    }
   };
 
   // 3 & 4. Order Status & Advance Payment Verification
@@ -484,6 +501,12 @@ export default function AdminPage() {
         ))}
       </div>
 
+      {dbConnected === false && (
+        <div style={{ background: "#fff3cd", border: "1px solid #ffeeba", color: "#856404", padding: "12px 16px", borderRadius: 12, marginBottom: 16, fontSize: 13 }}>
+          ⚠️ <strong>Database Sync Warning:</strong> Supabase Environment Variables (<code>NEXT_PUBLIC_SUPABASE_URL</code> এবং <code>SUPABASE_SERVICE_ROLE_KEY</code>) এখনো কানেক্ট করা হয়নি। তাই পরিবর্তনগুলো শুধু এই ব্রাউজারে সেভ হচ্ছে। সব মোবাইল ও ব্রাউজারে একসাথে আপডেট পেতে Vercel-এ Supabase Keys যুক্ত করুন।
+        </div>
+      )}
+
       {statusMsg && (
         <div style={{ background: "#eef8f2", border: "1px solid #b6e2c8", color: "#155724", padding: "12px 16px", borderRadius: 12, marginBottom: 20, fontSize: 13 }}>
           {statusMsg}
@@ -669,7 +692,7 @@ export default function AdminPage() {
                       {p.active ? "Hide" : "Show"}
                     </button>
                     <button
-                      onClick={() => handleDeleteProduct(p.id)}
+                      onClick={() => handleDeleteProduct(p)}
                       style={{ background: "#fdecea", color: "#c0392b", border: 0, padding: "7px 12px", borderRadius: 8, fontSize: 12, cursor: "pointer" }}
                     >
                       Delete
