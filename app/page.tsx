@@ -43,17 +43,21 @@ export default function Home() {
         }
 
         const [sRes, pRes] = await Promise.all([
-          fetch("/api/settings").catch(() => null),
-          fetch("/api/products").catch(() => null),
+          fetch(`/api/settings?t=${Date.now()}`, { cache: "no-store" }).catch(() => null),
+          fetch(`/api/products?t=${Date.now()}`, { cache: "no-store" }).catch(() => null),
         ]);
         if (sRes && sRes.ok) {
           const sData = await sRes.json();
-          if (sData.settings) setSettings((prev) => ({ ...prev, ...sData.settings }));
+          if (sData.settings) {
+            setSettings((prev) => ({ ...prev, ...sData.settings }));
+            localStorage.setItem("ibro_store_settings", JSON.stringify(sData.settings));
+          }
         }
         if (pRes && pRes.ok) {
           const pData = await pRes.json();
-          if (Array.isArray(pData.products) && pData.products.length > 0) {
+          if (pData.configured && Array.isArray(pData.products)) {
             setProducts(pData.products);
+            localStorage.setItem("ibro_store_products", JSON.stringify(pData.products));
           }
         }
       } catch {
