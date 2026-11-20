@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { env } from "@/lib/env";
 import { getSupabaseAdmin } from "@/lib/supabase";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET() {
   const supabase = getSupabaseAdmin();
   if (!supabase) return NextResponse.json({ settings: null });
