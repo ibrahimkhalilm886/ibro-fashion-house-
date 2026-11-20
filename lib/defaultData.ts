@@ -118,7 +118,7 @@ export const DEFAULT_SETTINGS: StoreSettings = {
 
 export const DEFAULT_PRODUCTS: ProductItem[] = [
   {
-    id: "prod-1",
+    id: "11111111-1111-4111-8111-111111111101",
     sku: "IBRO-SH-001",
     name: "Linen Everyday Shirt",
     slug: "linen-everyday-shirt",
@@ -134,7 +134,7 @@ export const DEFAULT_PRODUCTS: ProductItem[] = [
     active: true,
   },
   {
-    id: "prod-2",
+    id: "11111111-1111-4111-8111-111111111102",
     sku: "IBRO-TS-002",
     name: "Cotton Essential Tee",
     slug: "cotton-essential-tee",
@@ -150,7 +150,7 @@ export const DEFAULT_PRODUCTS: ProductItem[] = [
     active: true,
   },
   {
-    id: "prod-3",
+    id: "11111111-1111-4111-8111-111111111103",
     sku: "IBRO-KN-003",
     name: "Soft Knit Cardigan",
     slug: "soft-knit-cardigan",
@@ -165,7 +165,7 @@ export const DEFAULT_PRODUCTS: ProductItem[] = [
     active: true,
   },
   {
-    id: "prod-4",
+    id: "11111111-1111-4111-8111-111111111104",
     sku: "IBRO-CO-004",
     name: "Modern Daily Look",
     slug: "modern-daily-look",
@@ -180,7 +180,7 @@ export const DEFAULT_PRODUCTS: ProductItem[] = [
     active: true,
   },
   {
-    id: "prod-5",
+    id: "11111111-1111-4111-8111-111111111105",
     sku: "IBRO-SH-005",
     name: "Classic Overshirt",
     slug: "classic-overshirt",
@@ -195,7 +195,7 @@ export const DEFAULT_PRODUCTS: ProductItem[] = [
     active: true,
   },
   {
-    id: "prod-6",
+    id: "11111111-1111-4111-8111-111111111106",
     sku: "IBRO-TR-006",
     name: "Relaxed Trousers",
     slug: "relaxed-trousers",
