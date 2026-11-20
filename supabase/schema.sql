@@ -192,3 +192,15 @@ for select using (bucket_id = 'store-media');
 
 create policy "Authenticated upload store-media" on storage.objects
 for insert to authenticated with check (bucket_id = 'store-media');
+
+
+-- Seed initial 6 starter products into database (so deleting/editing works across all devices)
+insert into public.products (id, sku, name, slug, description, category, gender, price, compare_at_price, image_urls, sizes, colors, stock, active)
+values
+  ('11111111-1111-4111-8111-111111111101', 'IBRO-SH-001', 'Linen Everyday Shirt', 'linen-everyday-shirt', 'Breathable pure cotton-linen blend shirt tailored for all-day comfort.', 'Shirts', 'Men', 1890, 2200, '{"https://images.unsplash.com/photo-1603252109303-2751441dd157?w=700"}', '{"M","L","XL"}', '{"White","Sky Blue"}', 25, true),
+  ('11111111-1111-4111-8111-111111111102', 'IBRO-TS-002', 'Cotton Essential Tee', 'cotton-essential-tee', '180 GSM combed organic cotton t-shirt with relaxed modern fit.', 'T-Shirts', 'Men', 990, 1250, '{"https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=700"}', '{"M","L","XL","XXL"}', '{"White","Black","Navy"}', 40, true),
+  ('11111111-1111-4111-8111-111111111103', 'IBRO-KN-003', 'Soft Knit Cardigan', 'soft-knit-cardigan', 'Lightweight textured knit cardigan with minimal button closure.', 'Knitwear', 'Women', 2450, null, '{"https://images.unsplash.com/photo-1591369822096-ffd140ec948f?w=700"}', '{"S","M","L"}', '{"Cream","Sage"}', 15, true),
+  ('11111111-1111-4111-8111-111111111104', 'IBRO-CO-004', 'Modern Daily Look', 'modern-daily-look', 'Effortless everyday ensemble crafted with soft woven fabric.', 'Collection', 'Women', 1690, null, '{"https://images.unsplash.com/photo-1483985988355-763728e1935b?w=700"}', '{"S","M","L"}', '{"Beige","Olive"}', 18, true),
+  ('11111111-1111-4111-8111-111111111105', 'IBRO-SH-005', 'Classic Overshirt', 'classic-overshirt', 'Structured twill overshirt suitable for layering in any season.', 'Shirts', 'Men', 2190, null, '{"https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=700"}', '{"M","L","XL"}', '{"Charcoal","Sand"}', 20, true),
+  ('11111111-1111-4111-8111-111111111106', 'IBRO-TR-006', 'Relaxed Trousers', 'relaxed-trousers', 'Tailored straight-fit trousers with comfortable elastic waist detail.', 'Trousers', 'Men', 1990, null, '{"https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=700"}', '{"30","32","34","36"}', '{"Khaki","Black"}', 22, true)
+on conflict (sku) do nothing;
