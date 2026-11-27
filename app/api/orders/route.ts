@@ -69,6 +69,42 @@ export async function POST(req: NextRequest) {
       created_at: new Date().toISOString(),
     };
 
+    // Extract product name, size & color from items array for Business Hub
+    const firstItem = items[0] || {};
+    const itemSummary = items
+      .map((it: any) => {
+        const name = it?.name || it?.product_name || it?.title || "Item";
+        const sz = it?.size || it?.selectedSize || "";
+        const col = it?.color || it?.selectedColor || "";
+        const qty = it?.quantity || it?.qty || 1;
+        const variant = [sz && `Size: ${sz}`, col && `Color: ${col}`].filter(Boolean).join(", ");
+        return `${name}${variant ? ` (${variant})` : ""} x${qty}`;
+      })
+      .join(" | ");
+
+    const sendToBusinessHub = async () => {
+      try {
+        await fetch("https://ibro-business-hub.vercel.app/api/webhooks/website-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            order_number: orderNumber,
+            customer_name,
+            phone,
+            address: delivery_address,
+            product_name: itemSummary,
+            size: firstItem?.size || firstItem?.selectedSize || "",
+            color: firstItem?.color || firstItem?.selectedColor || "",
+            total: Number(total),
+            currency: "BDT",
+            notes: `${itemSummary} · ${payment_method} (${transaction_id})`,
+          }),
+        });
+      } catch (hubErr) {
+        console.error("Failed to notify IBRO Business Hub:", hubErr);
+      }
+    };
+
     const supabase = getSupabaseAdmin();
     if (supabase) {
       const { data, error } = await supabase
@@ -95,9 +131,12 @@ export async function POST(req: NextRequest) {
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
+
+      await sendToBusinessHub();
       return NextResponse.json({ order: data }, { status: 201 });
     }
 
+    await sendToBusinessHub();
     return NextResponse.json({ order: newOrder, mode: "local_fallback" }, { status: 201 });
   } catch (err: unknown) {
     return NextResponse.json(
